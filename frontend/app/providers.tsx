@@ -6,6 +6,7 @@ import { ReactNode, useState } from 'react';
 import { EventsProvider } from '../hooks/use-events-context';
 import { AuthProvider } from '../lib/contexts/auth-context';
 import { Toaster } from 'sonner';
+import { ThemeProvider } from '../components/theme-provider';
 
 interface ProvidersProps {
   children: ReactNode;
@@ -22,13 +23,20 @@ export function Providers({ children }: ProvidersProps) {
   }));
 
   return (
-    <AuthProvider>
-      <QueryClientProvider client={queryClient}>
-        <EventsProvider>
-          {children}
-          <Toaster position="top-right" richColors />
-        </EventsProvider>
-      </QueryClientProvider>
-    </AuthProvider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <EventsProvider>
+            {children}
+            <Toaster position="top-right" richColors />
+          </EventsProvider>
+        </QueryClientProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 } 

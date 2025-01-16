@@ -78,7 +78,7 @@ export default function MementoMori({ birthDate }: MementoMoriProps) {
                   {searchQuery && (
                     <Button
                       variant="ghost"
-                      size="icon"
+                      size="sm"
                       className="absolute right-0 top-0 h-full"
                       onClick={() => setSearchQuery('')}
                     >

@@ -174,63 +174,6 @@ export default function ProfilePage() {
                     />
                   </div>
                 </div>
-                
-                <div className="space-y-4">
-                  <Separator />
-                  <div className="grid gap-4">
-                    <h3 className="text-lg font-medium">Life Cube Preferences</h3>
-                    <div className="grid gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="weekStart">Week starts on</Label>
-                        <select 
-                          id="weekStart"
-                          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                        >
-                          <option value="monday">Monday</option>
-                          <option value="sunday">Sunday</option>
-                        </select>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="theme">Theme</Label>
-                        <select 
-                          id="theme"
-                          className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                        >
-                          <option value="light">Light</option>
-                          <option value="dark">Dark</option>
-                          <option value="system">System</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <Separator />
-                  <div className="grid gap-4">
-                    <h3 className="text-lg font-medium">Notification Settings</h3>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="grid gap-1">
-                          <Label>Weekly Reflections</Label>
-                          <p className="text-sm text-muted-foreground">
-                            Receive weekly prompts for life reflection
-                          </p>
-                        </div>
-                        <Switch />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="grid gap-1">
-                          <Label>Milestone Alerts</Label>
-                          <p className="text-sm text-muted-foreground">
-                            Get notified about important life milestones
-                          </p>
-                        </div>
-                        <Switch />
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
                 <div className="flex justify-end gap-4">
                   <Button type="button" variant="outline">Cancel</Button>
