@@ -4,6 +4,7 @@ import React from 'react'
 import { useAuth } from '@/lib/contexts/auth-context'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
+import { Navbar } from '@/components/ui/navbar'
 
 export default function ProtectedLayout({
   children,
@@ -27,5 +28,13 @@ export default function ProtectedLayout({
     return null
   }
 
-  return <>{children}</>
+  return (
+    <>
+      <Navbar>
+        <main className="pt-16">
+          {children}
+        </main>
+      </Navbar>
+    </>
+  )
 } 

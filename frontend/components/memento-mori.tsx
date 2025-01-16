@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Search, X } from 'lucide-react'
+import { Plus, Search, X, User } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,6 +21,7 @@ interface MementoMoriProps {
 export default function MementoMori({ birthDate }: MementoMoriProps) {
   const YEARS = 80
   const DECADES = YEARS / 10
+  const router = useRouter()
 
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null)
   const [hoveredWeek, setHoveredWeek] = useState<number | null>(null)
@@ -84,10 +86,12 @@ export default function MementoMori({ birthDate }: MementoMoriProps) {
                     </Button>
                   )}
                 </div>
-                <Button onClick={() => setIsAddingEvent(true)} className="w-full sm:w-auto">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Event
-                </Button>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <Button onClick={() => setIsAddingEvent(true)} className="flex-1 sm:flex-initial">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Event
+                  </Button>
+                </div>
               </div>
             </div>
 
