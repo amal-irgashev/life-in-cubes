@@ -7,8 +7,10 @@ from .views import (
     CustomTokenObtainPairView,
     CustomTokenRefreshView,
     DashboardView,
+    UserDetailView,
     register,
-    logout
+    logout,
+    change_password
 )
 
 # Create a router and register our viewsets with it.
@@ -24,6 +26,8 @@ urlpatterns = [
     path('api/v1/auth/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
     path('api/v1/auth/register/', register, name='register'),
     path('api/v1/auth/logout/', logout, name='logout'),
+    path('api/v1/auth/user/', UserDetailView.as_view(), name='user_detail'),
+    path('api/v1/auth/password/change/', change_password, name='change_password'),
     
     # Dashboard endpoint
     path('api/v1/dashboard/', DashboardView.as_view(), name='dashboard'),

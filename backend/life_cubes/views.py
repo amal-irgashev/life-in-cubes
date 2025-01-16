@@ -112,6 +112,13 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
+    @action(detail=False, methods=['get'])
+    def me(self, request):
+        """Get current user's profile with user data"""
+        user = request.user
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
 class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
@@ -185,3 +192,83 @@ class DashboardView(APIView):
                 {'error': 'Failed to fetch dashboard data'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+class UserDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        # Get user with profile
+        user = request.user
+        try:
+            # Ensure profile exists
+            profile, created = UserProfile.objects.get_or_create(user=user)
+            serializer = UserSerializer(user)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to get user data: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def put(self, request):
+        try:
+            user = request.user
+            profile = user.profile
+
+            # Update user data if provided
+            user_data = {
+                'first_name': request.data.get('first_name'),
+                'last_name': request.data.get('last_name'),
+                'email': request.data.get('email')
+            }
+            user_data = {k: v for k, v in user_data.items() if v is not None}
+            
+            if user_data:
+                user_serializer = UserSerializer(user, data=user_data, partial=True)
+                if user_serializer.is_valid():
+                    user_serializer.save()
+
+            # Update profile data if provided
+            profile_data = {
+                'birth_date': request.data.get('birth_date')
+            }
+            profile_data = {k: v for k, v in profile_data.items() if v is not None}
+            
+            if profile_data:
+                profile_serializer = UserProfileSerializer(profile, data=profile_data, partial=True)
+                if profile_serializer.is_valid():
+                    profile_serializer.save()
+
+            # Return updated user data
+            return Response(UserSerializer(user).data)
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to update user data: {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    try:
+        # Validate old password
+        if not request.user.check_password(request.data['old_password']):
+            return Response(
+                {'error': 'Invalid old password'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validate and set new password
+        validate_password(request.data['new_password'])
+        request.user.set_password(request.data['new_password'])
+        request.user.save()
+        
+        return Response({'message': 'Password updated successfully'})
+        
+    except ValidationError as e:
+        return Response({'error': list(e.messages)}, status=status.HTTP_400_BAD_REQUEST)
+    except KeyError:
+        return Response(
+            {'error': 'Both old_password and new_password are required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )

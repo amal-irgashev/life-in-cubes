@@ -5,11 +5,12 @@ export interface User {
     email: string;
     first_name: string;
     last_name: string;
+    profile: UserProfile;
 }
 
+// Profile types
 export interface UserProfile {
     id: number;
-    user: User;
     birth_date: string;
     created_at: string;
     updated_at: string;

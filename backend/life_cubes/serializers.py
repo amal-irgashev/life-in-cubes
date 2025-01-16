@@ -2,19 +2,25 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import UserProfile, Tag, Event
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ('id', 'username', 'email', 'first_name', 'last_name')
-        read_only_fields = ('id',)
-
 class UserProfileSerializer(serializers.ModelSerializer):
-    user = UserSerializer(read_only=True)
-    
     class Meta:
         model = UserProfile
-        fields = ('id', 'user', 'birth_date', 'created_at', 'updated_at')
+        fields = ('id', 'birth_date', 'created_at', 'updated_at')
         read_only_fields = ('id', 'created_at', 'updated_at')
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Ensure birth_date is included
+        data['birth_date'] = instance.birth_date.isoformat() if instance.birth_date else None
+        return data
+
+class UserSerializer(serializers.ModelSerializer):
+    profile = UserProfileSerializer(read_only=True)
+    
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'profile')
+        read_only_fields = ('id',)
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:

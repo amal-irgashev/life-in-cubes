@@ -4,8 +4,8 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    birth_date = models.DateField()
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    birth_date = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
