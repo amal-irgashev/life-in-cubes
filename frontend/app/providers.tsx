@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode, useState } from 'react';
 import { EventsProvider } from '../hooks/use-events-context';
 import { AuthProvider } from '../lib/contexts/auth-context';
+import { OnboardingProvider } from '../lib/contexts/onboarding-context';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from '../components/theme-provider';
 
@@ -32,8 +33,10 @@ export function Providers({ children }: ProvidersProps) {
       <AuthProvider>
         <QueryClientProvider client={queryClient}>
           <EventsProvider>
-            {children}
-            <Toaster position="top-right" richColors />
+            <OnboardingProvider>
+              {children}
+              <Toaster position="top-right" richColors />
+            </OnboardingProvider>
           </EventsProvider>
         </QueryClientProvider>
       </AuthProvider>

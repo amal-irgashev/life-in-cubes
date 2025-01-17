@@ -5,8 +5,9 @@ export interface Event {
   title: string
   description: string
   icon: string
-  color?: string
-  tags?: string[]
+  color: string
+  tags: string[]
+  date: string // ISO string format
 }
 
 export interface EventsState {

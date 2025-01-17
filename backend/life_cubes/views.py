@@ -58,23 +58,40 @@ class CustomTokenRefreshView(TokenRefreshView):
 @permission_classes([AllowAny])
 def register(request):
     try:
+        # Check if username already exists
+        username = request.data['username']
+        if User.objects.filter(username=username).exists():
+            return Response(
+                {'error': 'Username already exists'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
         # Validate password
         validate_password(request.data['password'])
         
         # Create user
         user = User.objects.create_user(
-            username=request.data['username'],
+            username=username,
             email=request.data.get('email', ''),
             password=request.data['password'],
             first_name=request.data.get('first_name', ''),
             last_name=request.data.get('last_name', '')
         )
         
-        # Create user profile
-        UserProfile.objects.create(
-            user=user,
-            birth_date=request.data.get('birth_date')
-        )
+        # Create user profile with birth_date
+        birth_date = request.data.get('birth_date')
+        if birth_date:
+            try:
+                UserProfile.objects.create(
+                    user=user,
+                    birth_date=birth_date
+                )
+            except Exception as e:
+                # If profile creation fails, delete the user and raise error
+                user.delete()
+                raise Exception(f'Invalid birth date format: {str(e)}')
+        else:
+            UserProfile.objects.create(user=user)
         
         # Generate tokens
         refresh = RefreshToken.for_user(user)
