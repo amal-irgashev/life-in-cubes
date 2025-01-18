@@ -13,6 +13,8 @@ import { AddEventDialog } from './add-event-dialog'
 import { DecadeGrid } from './decade-grid'
 import { useEvents } from '@/hooks/use-events-context'
 import { Event } from '@/types/events'
+import { AdvancedSearch, SearchFilters } from './advanced-search'
+import { useEventSearch } from '@/hooks/use-event-search'
 
 interface MementoMoriProps {
   birthDate: Date
@@ -26,10 +28,15 @@ export default function MementoMori({ birthDate }: MementoMoriProps) {
   const [selectedWeek, setSelectedWeek] = useState<number | null>(null)
   const [hoveredWeek, setHoveredWeek] = useState<number | null>(null)
   const [isAddingEvent, setIsAddingEvent] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchFilters, setSearchFilters] = useState<SearchFilters>({
+    text: '',
+    category: 'all',
+    dateRange: 'all'
+  })
   const [focusedDecade, setFocusedDecade] = useState<number | null>(null)
   
   const { state: { events }, dispatch } = useEvents()
+  const filteredEvents = useEventSearch(events, searchFilters)
   const weeksLived = calculateWeeks(birthDate, new Date())
 
   const handleWeekClick = (weekIndex: number) => {
@@ -67,24 +74,10 @@ export default function MementoMori({ birthDate }: MementoMoriProps) {
               </h1>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4 w-full sm:w-auto">
                 <div className="relative flex-grow sm:flex-grow-0">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder="Search events..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 pr-8 w-full sm:w-[300px]"
+                  <AdvancedSearch
+                    onSearch={setSearchFilters}
+                    className="w-full sm:w-[300px]"
                   />
-                  {searchQuery && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full"
-                      onClick={() => setSearchQuery('')}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">
                   <Button onClick={() => setIsAddingEvent(true)} className="flex-1 sm:flex-initial">
@@ -107,7 +100,7 @@ export default function MementoMori({ birthDate }: MementoMoriProps) {
                   hoveredWeek={hoveredWeek}
                   onWeekHover={setHoveredWeek}
                   birthDate={birthDate}
-                  searchQuery={searchQuery}
+                  searchQuery={searchFilters.text || ''}
                 />
               ))}
             </div>
@@ -133,7 +126,7 @@ export default function MementoMori({ birthDate }: MementoMoriProps) {
               weekIndex={selectedWeek}
               birthDate={birthDate}
               onBack={handleBackToGrid}
-              events={events.filter(e => e.weekIndex === selectedWeek)}
+              events={filteredEvents.filter(e => e.weekIndex === selectedWeek)}
               onAddEvent={() => setIsAddingEvent(true)}
             />
           </motion.div>

@@ -35,7 +35,11 @@ export function RegisterForm() {
       await register(data)
       router.push('/dashboard')
     } catch (err: any) {
-      setError(err.message || 'Failed to register')
+      if (err.response?.data?.error) {
+        setError(err.response.data.error)
+      } else {
+        setError(err.message || 'Failed to register')
+      }
     } finally {
       setIsLoading(false)
     }

@@ -7,8 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn, generateId } from '@/lib/utils'
 import { format, addDays, startOfWeek, addWeeks } from 'date-fns'
-import { CalendarIcon, ChevronDown } from 'lucide-react'
-import { Calendar } from '@/components/ui/calendar'
+import { ChevronDown } from 'lucide-react'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Briefcase, Heart, Book, Plane } from 'lucide-react'
 import { Event } from '@/types/events'
@@ -107,7 +106,8 @@ export function AddEventDialog({ isOpen, onClose, onAdd, selectedWeek, birthDate
       description,
       icon: category.id,
       color: category.color,
-      tags: [category.id]
+      tags: [category.id],
+      date: eventDate.toISOString()
     })
 
     setTitle('')
@@ -120,33 +120,17 @@ export function AddEventDialog({ isOpen, onClose, onAdd, selectedWeek, birthDate
   const renderDateSelector = () => (
     <div className="space-y-2">
       <Label>Select Date</Label>
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button
-            variant={"outline"}
-            className={cn(
-              "w-full justify-start text-left font-normal",
-              !selectedDate && "text-muted-foreground"
-            )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={setSelectedDate}
-            initialFocus
-          />
-        </PopoverContent>
-      </Popover>
+      <Input
+        type="date"
+        value={selectedDate ? format(selectedDate, "yyyy-MM-dd") : ''}
+        onChange={(e) => setSelectedDate(e.target.value ? new Date(e.target.value) : undefined)}
+        className="w-full"
+      />
     </div>
   )
 
   const renderWeekDaySelector = () => {
-    const weekStart = startOfWeek(addWeeks(birthDate, (selectedWeek || 0) * 7))
+    const weekStart = addWeeks(birthDate, selectedWeek || 0)
     return (
       <div className="space-y-2">
         <Label>Select Day of the Week</Label>

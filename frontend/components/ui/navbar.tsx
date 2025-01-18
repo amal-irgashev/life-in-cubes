@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { User, LogOut, LayoutDashboard, Settings, Calendar, ChevronRight, ChevronLeft } from 'lucide-react'
+import { User, LogOut, LayoutDashboard, Settings, ChevronRight, ChevronLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/lib/contexts/auth-context'
 import { cn } from '@/lib/utils'
@@ -42,11 +42,6 @@ export function Navbar({ children }: { children: React.ReactNode }) {
       href: "/settings",
       label: "Settings",
       icon: Settings
-    },
-    {
-      href: "/calendar",
-      label: "Calendar",
-      icon: Calendar
     }
   ]
 
