@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Event } from '@/types/events'
-import { SearchFilters } from '@/components/advanced-search'
+import { SearchFilters } from '@/components/dialogs/advanced-search'
 import { subDays, isAfter, isBefore, isWithinInterval } from 'date-fns'
 
 export function useEventSearch(events: Event[], filters: SearchFilters) {

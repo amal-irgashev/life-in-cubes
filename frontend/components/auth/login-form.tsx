@@ -1,20 +1,29 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { LogIn, Lock, Mail } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/lib/contexts/auth-context'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { login } = useAuth()
+  const { signIn } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Handle session expired message
+  useEffect(() => {
+    const error = searchParams.get('error')
+    if (error === 'session_expired') {
+      setError('Your session has expired. Please sign in again.')
+    }
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -26,8 +35,9 @@ export function LoginForm() {
     const password = formData.get('password') as string
 
     try {
-      await login({ username, password })
-      router.push('/dashboard')
+      // Get the redirect URL from query params or use default
+      const redirectTo = searchParams.get('from') || '/dashboard'
+      await signIn(username, password, redirectTo)
     } catch (err: any) {
       setError(err.message || 'Failed to login')
     } finally {
@@ -62,6 +72,7 @@ export function LoginForm() {
                   placeholder="Username"
                   required
                   className="pl-9"
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -75,6 +86,7 @@ export function LoginForm() {
                   placeholder="Password"
                   required
                   className="pl-9"
+                  disabled={isLoading}
                 />
               </div>
             </div>

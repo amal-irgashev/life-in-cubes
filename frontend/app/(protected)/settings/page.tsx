@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
-import { PageTransition } from "@/components/page-transition"
+import { PageTransition } from "@/components/layout"
 
 export default function SettingsPage() {
   const router = useRouter()

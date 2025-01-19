@@ -10,17 +10,17 @@ export interface LoginRequest {
     password: string;
 }
 
-export interface RegisterRequest {
-    username: string;
+export interface RegisterRequest extends LoginRequest {
     email: string;
-    password: string;
     first_name?: string;
     last_name?: string;
     birth_date?: string;
 }
 
-export interface AuthResponse extends AuthTokens {
+export interface AuthResponse {
     user: User;
+    access_token: string;
+    refresh_token: string;
 }
 
 export interface AuthState {

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, UseQueryOptions, UseMutationOptions } from '@tanstack/react-query';
-import { api } from '../lib/api-client';
+import apiClient from '../lib/api-client';
 import { AxiosError } from 'axios';
+
 
 // Generic type for API responses
 export type ApiResponse<T> = {
@@ -13,7 +14,7 @@ export type ApiResponse<T> = {
 export function useCurrentUser(options?: UseQueryOptions<any, AxiosError>) {
   return useQuery({
     queryKey: ['currentUser'],
-    queryFn: () => api.users.getCurrent(),
+    queryFn: () => apiClient.users.getCurrent(),
     ...options,
   });
 }
@@ -22,7 +23,7 @@ export function useCurrentUser(options?: UseQueryOptions<any, AxiosError>) {
 export function useRegister() {
   return useMutation({
     mutationFn: (data: { username: string; email: string; password: string }) =>
-      api.auth.register(data),
+      apiClient.auth.register(data),
   });
 }
 
@@ -30,15 +31,14 @@ export function useRegister() {
 export function useLogin() {
   return useMutation({
     mutationFn: (data: { username: string; password: string }) =>
-      api.auth.login(data),
+      apiClient.auth.login(data),
   });
 }
 
 // Example hook for user logout
 export function useLogout() {
   return useMutation({
-    mutationFn: () => api.auth.logout(),
+    mutationFn: () => apiClient.auth.logout(),
   });
 }
 
-// You can add more custom hooks for other API endpoints as needed 

@@ -24,3 +24,8 @@ export type EventAction =
   | { type: 'SET_ERROR'; payload: string }
   | { type: 'CLEAR_ERROR' }
 
+export interface EventsContextType {
+  state: EventsState
+  dispatch: (action: EventAction) => void
+}
+

@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.settings import api_settings
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
@@ -19,6 +20,40 @@ from .serializers import (
 )
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
+from django.conf import settings
+from datetime import datetime
+from django.middleware.csrf import get_token
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.cache import never_cache
+
+def set_auth_cookies(response, access_token, refresh_token):
+    """Helper function to set authentication cookies"""
+    response.set_cookie(
+        settings.SIMPLE_JWT['AUTH_COOKIE'],
+        access_token,
+        expires=datetime.now() + settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'],
+        secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+        httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
+        samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
+        path=settings.SIMPLE_JWT['AUTH_COOKIE_PATH']
+    )
+    response.set_cookie(
+        settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'],
+        refresh_token,
+        expires=datetime.now() + settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'],
+        secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+        httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
+        samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
+        path=settings.SIMPLE_JWT['AUTH_COOKIE_PATH']
+    )
+
+def clear_auth_cookies(response):
+    """Helper function to clear authentication cookies"""
+    response.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE'])
+    response.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'])
+    return response
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
@@ -27,9 +62,19 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             if response.status_code == 200:
                 user = User.objects.get(username=request.data['username'])
                 user_data = UserSerializer(user).data
-                response.data['user'] = user_data
-                # Add token type for clarity
-                response.data['token_type'] = 'Bearer'
+                
+                # Set cookies
+                set_auth_cookies(
+                    response,
+                    response.data['access'],
+                    response.data['refresh']
+                )
+                
+                # Update response data
+                response.data = {
+                    'user': user_data,
+                    'message': 'Successfully logged in'
+                }
             return response
         except Exception as e:
             return Response(
@@ -40,8 +85,28 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 class CustomTokenRefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
         try:
+            # Get refresh token from cookie
+            refresh_token = request.COOKIES.get(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'])
+            if not refresh_token:
+                return Response(
+                    {'error': 'No refresh token provided'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            
+            request.data['refresh'] = refresh_token
             response = super().post(request, *args, **kwargs)
-            response.data['token_type'] = 'Bearer'
+            
+            if response.status_code == 200:
+                # Set new access token in cookie
+                set_auth_cookies(
+                    response,
+                    response.data['access'],
+                    response.data.get('refresh', refresh_token)  # Use new refresh token if provided
+                )
+                
+                # Clean response data
+                response.data = {'message': 'Token refreshed successfully'}
+            
             return response
         except TokenError:
             return Response(
@@ -96,28 +161,43 @@ def register(request):
         # Generate tokens
         refresh = RefreshToken.for_user(user)
         
-        return Response({
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-            'token_type': 'Bearer',
-            'user': UserSerializer(user).data
+        response = Response({
+            'user': UserSerializer(user).data,
+            'message': 'Successfully registered'
         }, status=status.HTTP_201_CREATED)
+        
+        # Set cookies
+        set_auth_cookies(
+            response,
+            str(refresh.access_token),
+            str(refresh)
+        )
+        
+        return response
         
     except ValidationError as e:
         return Response({'error': list(e.messages)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def logout(request):
-    try:
-        refresh_token = request.data['refresh']
-        token = RefreshToken(refresh_token)
-        token.blacklist()
-        return Response({'message': 'Successfully logged out'}, status=status.HTTP_200_OK)
-    except Exception:
-        return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+@csrf_exempt
+@require_http_methods(["POST"])
+@never_cache
+def logout_view(request):
+    """
+    Logout view that clears auth cookies.
+    CSRF protection is disabled for this view since we're just clearing cookies.
+    """
+    response = JsonResponse({'detail': 'Successfully logged out'})
+    clear_auth_cookies(response)
+    
+    # Add CORS headers
+    response["Access-Control-Allow-Credentials"] = "true"
+    response["Access-Control-Allow-Origin"] = request.headers.get("Origin") or "http://localhost:3000"
+    response["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+    response["Access-Control-Allow-Headers"] = "Content-Type"
+    
+    return response
 
 class UserProfileViewSet(viewsets.ModelViewSet):
     serializer_class = UserProfileSerializer
@@ -289,3 +369,12 @@ def change_password(request):
             {'error': 'Both old_password and new_password are required'},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_csrf_token(request):
+    """Get CSRF token for the current session"""
+    token = get_token(request)
+    response = JsonResponse({'csrfToken': token})
+    response['X-CSRFToken'] = token
+    return response

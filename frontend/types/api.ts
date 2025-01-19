@@ -12,6 +12,7 @@ export interface User {
 export interface UserProfile {
     id: number;
     birth_date: string;
+    avatar?: string;
     created_at: string;
     updated_at: string;
 }
