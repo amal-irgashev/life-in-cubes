@@ -11,6 +11,11 @@ import { cn, generateId } from '@/lib/utils'
 import { format, addDays, startOfWeek, addWeeks } from 'date-fns'
 import { Briefcase, Heart, Book, Plane, X } from 'lucide-react'
 import { Event } from '@/types/events'
+import { eventService } from '@/lib/services/event-service'
+import { toast } from 'sonner'
+import { authService } from '@/lib/services/auth-service'
+import Cookies from 'js-cookie'
+import { useEvents } from '@/lib/contexts/events-context'
 
 interface AddEventDialogProps {
   open: boolean
@@ -53,6 +58,7 @@ const EVENT_CATEGORIES = [
 ]
 
 export function AddEventDialog({ open, onOpenChange, onAdd, selectedWeek, birthDate, editingEvent }: AddEventDialogProps) {
+  const { dispatch, loadEvents } = useEvents()
   const [title, setTitle] = useState(editingEvent?.title || '')
   const [description, setDescription] = useState(editingEvent?.description || '')
   const [selectedCategory, setSelectedCategory] = useState<string>(editingEvent?.icon || EVENT_CATEGORIES[0].id)
@@ -74,41 +80,63 @@ export function AddEventDialog({ open, onOpenChange, onAdd, selectedWeek, birthD
     setSelectedDayOfWeek(undefined)
   }, [editingEvent, open])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim()) return
 
-    let eventDate: Date
-    let dayOfWeek: number = 0 // Default to Sunday
+    try {
+      // Ensure we have a CSRF token
+      if (!Cookies.get('csrftoken')) {
+        await authService.getCsrfToken()
+      }
 
-    if (selectedWeek !== null && selectedDayOfWeek !== undefined) {
-      dayOfWeek = selectedDayOfWeek
-      const weekStart = startOfWeek(addWeeks(birthDate, selectedWeek))
-      eventDate = addDays(weekStart, dayOfWeek)
-    } else if (selectedDate) {
-      eventDate = selectedDate
-      // Get the day of week (0-6, where 0 is Sunday)
-      dayOfWeek = selectedDate.getDay()
-    } else {
-      // Default to current date if no date is selected
-      eventDate = new Date()
-      dayOfWeek = eventDate.getDay()
+      let eventDate: Date
+      let dayOfWeek: number = 0 // Default to Sunday
+
+      if (selectedWeek !== null && selectedDayOfWeek !== undefined) {
+        dayOfWeek = selectedDayOfWeek
+        const weekStart = startOfWeek(addWeeks(birthDate, selectedWeek))
+        eventDate = addDays(weekStart, dayOfWeek)
+      } else if (selectedDate) {
+        eventDate = selectedDate
+        dayOfWeek = eventDate.getDay()
+      } else {
+        eventDate = new Date()
+        dayOfWeek = eventDate.getDay()
+      }
+
+      const weekIndex = Math.floor((eventDate.getTime() - birthDate.getTime()) / (7 * 24 * 60 * 60 * 1000))
+      const category = EVENT_CATEGORIES.find(cat => cat.id === selectedCategory)!
+
+      const eventData = {
+        week_index: weekIndex,
+        day_of_week: dayOfWeek,
+        title,
+        description,
+        icon: category.id,
+        color: category.color,
+        tags: [] // Tags will be handled by the backend
+      }
+
+      let savedEvent: Event
+      if (editingEvent) {
+        savedEvent = await eventService.updateEvent(editingEvent.id, eventData)
+      } else {
+        savedEvent = await eventService.createEvent(eventData)
+      }
+
+      // Always reload events to ensure consistency
+      await loadEvents()
+      
+      // Call onAdd after state is updated
+      onAdd(savedEvent)
+      toast.success(editingEvent ? 'Event updated successfully' : 'Event added successfully')
+      onOpenChange(false)
+
+    } catch (error) {
+      console.error('Error saving event:', error)
+      toast.error('Failed to save event. Please try again.')
     }
-
-    const weekIndex = Math.floor((eventDate.getTime() - birthDate.getTime()) / (7 * 24 * 60 * 60 * 1000))
-    const category = EVENT_CATEGORIES.find(cat => cat.id === selectedCategory)!
-
-    onAdd({
-      id: editingEvent?.id || generateId(),
-      weekIndex,
-      dayOfWeek,
-      title,
-      description,
-      icon: category.id,
-      color: category.color,
-      tags: [category.id],
-      date: eventDate.toISOString()
-    })
 
     setTitle('')
     setDescription('')

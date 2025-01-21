@@ -234,12 +234,22 @@ class EventViewSet(viewsets.ModelViewSet):
     search_fields = ['title', 'description', 'tags__name']
     ordering_fields = ['week_index', 'day_of_week', 'created_at']
     ordering = ['week_index', 'day_of_week']
+    pagination_class = None  # Disable pagination for this viewset
 
     def get_queryset(self):
-        return Event.objects.filter(user=self.request.user).prefetch_related('tags')
+        """Get events for the current user."""
+        return Event.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
+        """Create a new event for the current user."""
         serializer.save(user=self.request.user)
+
+    def perform_update(self, serializer):
+        """Update an event, ensuring it belongs to the current user."""
+        event = self.get_object()
+        if event.user != self.request.user:
+            raise PermissionError("You don't have permission to edit this event.")
+        serializer.save()
 
     @action(detail=False, methods=['get'])
     def week_range(self, request):
@@ -373,8 +383,5 @@ def change_password(request):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def get_csrf_token(request):
-    """Get CSRF token for the current session"""
-    token = get_token(request)
-    response = JsonResponse({'csrfToken': token})
-    response['X-CSRFToken'] = token
-    return response
+    """Get CSRF token for the client."""
+    return JsonResponse({'csrfToken': get_token(request)})

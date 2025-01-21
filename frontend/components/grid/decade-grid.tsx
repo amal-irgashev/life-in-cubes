@@ -78,7 +78,7 @@ export function DecadeGrid({
       >
         {Array.from({ length: YEARS_PER_DECADE * WEEKS_PER_YEAR }).map((_, index) => {
           const weekIndex = startWeek + index
-          const weekEvents = filteredEvents.filter(e => e.weekIndex === weekIndex)
+          const weekEvents = filteredEvents.filter(e => e.week_index === weekIndex)
           const isHovered = isZoomed && (hoveredWeek === weekIndex || window?.matchMedia('(hover: none)').matches)
 
           return (

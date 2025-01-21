@@ -32,12 +32,12 @@ export function Providers({ children }: ProvidersProps) {
         disableTransitionOnChange
       >
         <AuthProvider>
-          <QueryClientProvider client={queryClient}>
-            <EventsProvider>
+          <EventsProvider>
+            <QueryClientProvider client={queryClient}>
               {children}
               <Toaster position="top-right" richColors />
-            </EventsProvider>
-          </QueryClientProvider>
+            </QueryClientProvider>
+          </EventsProvider>
         </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>
