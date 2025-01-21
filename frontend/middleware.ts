@@ -16,15 +16,15 @@ export function middleware(request: NextRequest) {
   const isPublicRoute = PUBLIC_ROUTES.some(route => pathname.startsWith(route))
   
   // Get both access and refresh tokens
-  const accessToken = request.cookies.get('access_token')?.value
-  const refreshToken = request.cookies.get('refresh_token')?.value
+  const accessToken = request.cookies.get('jwt_access_token')?.value
+  const refreshToken = request.cookies.get('jwt_refresh_token')?.value
 
   // If we're already on the login page with session_expired error, don't redirect
   if (pathname === '/login' && searchParams.get('error') === 'session_expired') {
     // Clear any existing tokens
     const response = NextResponse.next()
-    response.cookies.delete('access_token')
-    response.cookies.delete('refresh_token')
+    response.cookies.delete('jwt_access_token')
+    response.cookies.delete('jwt_refresh_token')
     return response
   }
 
@@ -55,7 +55,7 @@ export function middleware(request: NextRequest) {
   if (!pathname.startsWith('/api/')) {
     // Ensure cookies are properly set with secure flags
     if (accessToken) {
-      response.cookies.set('access_token', accessToken, {
+      response.cookies.set('jwt_access_token', accessToken, {
         path: '/',
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -63,7 +63,7 @@ export function middleware(request: NextRequest) {
       })
     }
     if (refreshToken) {
-      response.cookies.set('refresh_token', refreshToken, {
+      response.cookies.set('jwt_refresh_token', refreshToken, {
         path: '/',
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',

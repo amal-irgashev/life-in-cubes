@@ -5,6 +5,7 @@ export interface AuthContextType {
   user: User | null
   isLoading: boolean
   isAuthenticated: boolean
+  sessionError: string | null
   signIn: (
     credentials: { 
       username: string | FormDataEntryValue | null

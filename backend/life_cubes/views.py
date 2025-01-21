@@ -58,10 +58,6 @@ def clear_auth_cookies(response):
 class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         try:
-            # Print request data for debugging (excluding password)
-            print("Login attempt for user:", request.data.get('username'))
-            print("Request data:", {k: v if k != 'password' else '***' for k, v in request.data.items()})
-            
             # Validate required fields
             if not request.data.get('username'):
                 return Response(
@@ -99,8 +95,19 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 # Update response data
                 response.data = {
                     'user': user_data,
-                    'message': 'Successfully logged in'
+                    'message': 'Successfully logged in',
+                    'access': response.data['access'],
+                    'refresh': response.data['refresh']
                 }
+
+                # Add CORS headers
+                origin = request.headers.get("Origin") or "http://localhost:3000"
+                response["Access-Control-Allow-Credentials"] = "true"
+                response["Access-Control-Allow-Origin"] = origin
+                response["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+                response["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-CSRFToken"
+                response["Access-Control-Expose-Headers"] = "Set-Cookie"
+                
                 return response
             else:
                 return Response(
@@ -419,12 +426,10 @@ def get_csrf_token(request):
     """Get CSRF token for the current session"""
     try:
         csrf_token = get_token(request)
-        print("Generated CSRF token:", csrf_token)
         response = JsonResponse({'csrfToken': csrf_token})
         response["X-CSRFToken"] = csrf_token
         return response
     except Exception as e:
-        print("CSRF token error:", str(e))
         return Response(
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR

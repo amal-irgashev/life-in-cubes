@@ -166,6 +166,8 @@ CSRF_COOKIE_HTTPONLY = False  # Must be False to be accessible by JavaScript
 CSRF_USE_SESSIONS = False
 CSRF_COOKIE_NAME = 'csrftoken'
 CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
+CSRF_COOKIE_DOMAIN = None
+CSRF_COOKIE_PATH = '/'
 
 # JWT Settings
 SIMPLE_JWT = {
@@ -185,13 +187,13 @@ SIMPLE_JWT = {
     'TOKEN_TYPE_CLAIM': 'token_type',
     'JTI_CLAIM': 'jti',
     'TOKEN_USER_CLASS': 'rest_framework_simplejwt.models.TokenUser',
-    'AUTH_COOKIE': 'access_token',  # Matches frontend cookie name
-    'AUTH_COOKIE_REFRESH': 'refresh_token',  # Matches frontend cookie name
+    'AUTH_COOKIE': 'jwt_access_token',
+    'AUTH_COOKIE_REFRESH': 'jwt_refresh_token',
     'AUTH_COOKIE_DOMAIN': None,
     'AUTH_COOKIE_SECURE': False,  # Set to True in production with HTTPS
-    'AUTH_COOKIE_HTTP_ONLY': True,
+    'AUTH_COOKIE_HTTP_ONLY': False,  # Set to False temporarily for debugging
     'AUTH_COOKIE_PATH': '/',
-    'AUTH_COOKIE_SAMESITE': 'Lax',
+    'AUTH_COOKIE_SAMESITE': None,  # Changed from 'Lax' to None for development
 }
 
 # REST Framework settings

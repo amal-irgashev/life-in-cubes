@@ -34,13 +34,60 @@ Life in Cubes is a unique life visualization and event tracking application that
    - User registration and authentication
    - Profile management with birth date
    - Personalized event tracking
-   - Secure token-based authentication
+   - Secure token-based authentication with HTTP-only cookies
+   - Consistent cookie management across frontend and backend
 
 4. **Data Organization**
    - Tag-based event categorization
    - Color coding for different event types
    - Icon support for visual representation
    - Week and day-based event organization
+
+## Authentication & Cookie Management
+
+### Cookie Names and Usage
+- **Access Token**: `jwt_access_token` (HTTP-only)
+  - Stores the JWT access token
+  - Used for API authorization
+  - Expires in 60 minutes
+
+- **Refresh Token**: `jwt_refresh_token` (HTTP-only)
+  - Stores the JWT refresh token
+  - Used to obtain new access tokens
+  - Expires in 7 days
+
+- **CSRF Token**: `csrftoken`
+  - Protects against CSRF attacks
+  - Required for POST, PUT, PATCH, DELETE requests
+  - Accessible by JavaScript for header inclusion
+
+### Cookie Security Options
+```typescript
+const COOKIE_OPTIONS = {
+  path: '/',
+  sameSite: 'lax',
+  secure: process.env.NODE_ENV === 'production',
+  expires: 7 // days
+}
+```
+
+### API Authentication Flow
+1. User logs in via `/api/v1/auth/login/`
+2. Backend sets HTTP-only cookies for access and refresh tokens
+3. Frontend includes tokens automatically in subsequent requests
+4. Access token expires -> Frontend uses refresh token to get new access token
+5. Refresh token expires -> User must log in again
+
+### API Endpoints
+
+#### Authentication
+- POST `/api/v1/auth/login/` - User login
+- POST `/api/v1/auth/register/` - User registration
+- POST `/api/v1/auth/logout/` - User logout
+- POST `/api/v1/auth/refresh/` - Refresh JWT token
+- POST `/api/v1/auth/password/change/` - Change password
+- GET `/api/v1/auth/user/` - Get current user details
+- GET `/api/v1/auth/csrf/` - Get CSRF token
 
 ## Database Models
 
@@ -88,52 +135,85 @@ Meta:
 project/
 ├── backend/
 │   ├── core/                   # Django project settings
+│   │   ├── __init__.py
+│   │   ├── asgi.py
+│   │   ├── settings.py
+│   │   ├── urls.py
+│   │   └── wsgi.py
 │   ├── life_cubes/            # Main Django app
 │   │   ├── migrations/        # Database migrations
-│   │   ├── admin.py          # Admin interface configuration
+│   │   ├── __init__.py
+│   │   ├── admin.py          # Admin interface
 │   │   ├── apps.py           # App configuration
-│   │   ├── authentication.py  # Custom authentication handlers
+│   │   ├── authentication.py  # Custom auth handlers
 │   │   ├── models.py         # Database models
 │   │   ├── serializers.py    # API serializers
-│   │   ├── urls.py           # API endpoints routing
-│   │   ├── utils.py          # Utility functions
 │   │   ├── tests.py          # Test cases
-│   │   └── views.py          # API views and logic
+│   │   ├── urls.py           # API routing
+│   │   ├── utils.py          # Utility functions
+│   │   └── views.py          # API views
+│   ├── README.md
 │   ├── manage.py             # Django CLI
-│   ├── requirements.txt      # Python dependencies
-│   ├── db.sqlite3           # SQLite database
-│   └── .env                  # Environment variables
+│   └── requirements.txt      # Python dependencies
 │
 ├── frontend/
 │   ├── app/                  # Next.js app directory
-│   │   ├── (auth)/          # Authentication routes
+│   │   ├── (auth)/          # Auth routes
+│   │   │   ├── login/
+│   │   │   ├── register/
+│   │   │   └── layout.tsx
 │   │   ├── (protected)/     # Protected routes
+│   │   │   ├── dashboard/
+│   │   │   ├── profile/
+│   │   │   ├── settings/
+│   │   │   └── layout.tsx
 │   │   ├── fonts/           # Font assets
 │   │   ├── error.tsx        # Error handling
-│   │   ├── not-found.tsx    # 404 page
 │   │   ├── layout.tsx       # Root layout
 │   │   ├── page.tsx         # Home page
-│   │   ├── providers.tsx    # App providers
-│   │   └── globals.css      # Global styles
+│   │   └── providers.tsx    # App providers
 │   ├── components/          # React components
-│   │   ├── ui/             # UI components
 │   │   ├── auth/           # Auth components
-│   │   ├── profile/        # Profile components
-│   │   ├── grid/           # Grid visualization components
+│   │   │   ├── login-form.tsx
+│   │   │   ├── protected-route.tsx
+│   │   │   └── register-form.tsx
 │   │   ├── dialogs/        # Dialog components
-│   │   └── ...             # Other components
-│   ├── lib/                # Utilities and helpers
+│   │   │   ├── add-event-dialog.tsx
+│   │   │   └── advanced-search.tsx
+│   │   ├── grid/           # Grid components
+│   │   │   ├── decade-grid.tsx
+│   │   │   ├── decade-mood.tsx
+│   │   │   ├── memento-mori.tsx
+│   │   │   ├── week-detail.tsx
+│   │   │   └── week-preview.tsx
+│   │   ├── landing/        # Landing page components
+│   │   ├── layout/         # Layout components
+│   │   ├── profile/        # Profile components
+│   │   ├── theme/          # Theme components
+│   │   └── ui/             # UI components
+│   ├── hooks/              # Custom React hooks
+│   │   ├── use-api.ts
+│   │   ├── use-auth.ts
+│   │   ├── use-events.ts
+│   │   └── use-toast.ts
+│   ├── lib/                # Utilities and services
 │   │   ├── contexts/       # React contexts
+│   │   │   ├── auth-context.tsx
+│   │   │   └── events-context.tsx
 │   │   ├── services/       # API services
-│   │   ├── api-client.ts   # API client
-│   │   └── ...             # Other utilities
-│   ├── hooks/             # Custom React hooks
-│   ├── types/             # TypeScript types
-│   ├── public/            # Static assets
-│   ├── middleware.ts      # Next.js middleware
-│   ├── tailwind.config.ts # Tailwind configuration
-│   ├── package.json       # Node dependencies
-│   └── tsconfig.json      # TypeScript configuration
+│   │   │   ├── auth-service.ts
+│   │   │   ├── event-service.ts
+│   │   │   └── user-service.ts
+│   │   └── api-client.ts   # API client
+│   ├── types/              # TypeScript types
+│   │   ├── api.ts
+│   │   ├── auth.ts
+│   │   ├── events.ts
+│   │   └── user.ts
+│   ├── public/             # Static assets
+│   ├── middleware.ts       # Next.js middleware
+│   ├── tailwind.config.ts  # Tailwind config
+│   └── package.json        # Node dependencies
 ```
 
 ## Backend Components
@@ -219,10 +299,12 @@ Located in `components/auth/`:
 ## Security Features
 
 1. **Authentication**
-   - JWT-based authentication
-   - Token refresh mechanism
+   - JWT-based authentication with HTTP-only cookies
+   - Automatic token refresh mechanism
    - Token blacklisting for logout
-   - HTTP-only cookies for token storage
+   - CSRF protection with dedicated token
+   - Consistent cookie naming across frontend and backend
+   - Secure cookie options (HTTPOnly, SameSite, Secure in production)
 
 2. **Authorization**
    - Permission-based access control
