@@ -110,7 +110,7 @@ export function MementoMori({ birthDate }: MementoMoriProps) {
         >
           {Array.from({ length: YEARS_PER_DECADE * WEEKS_PER_YEAR }).map((_, index) => {
             const weekIndex = startWeek + index
-            const event = filteredEvents.find(e => e.weekIndex === weekIndex)
+            const event = filteredEvents.find(e => e.week_index === weekIndex)
             const isHovered = isZoomed && hoveredWeek === weekIndex
 
             return (
@@ -134,7 +134,7 @@ export function MementoMori({ birthDate }: MementoMoriProps) {
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div 
                       className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full opacity-80" 
-                      style={{ backgroundColor: event.color }}
+                      style={{ backgroundColor: event.color || '#CBD5E1' }}
                     />
                   </div>
                 )}
@@ -232,7 +232,7 @@ export function MementoMori({ birthDate }: MementoMoriProps) {
               weekIndex={selectedWeek}
               birthDate={birthDate}
               onBack={() => setSelectedWeek(null)}
-              events={events.filter(e => e.weekIndex === selectedWeek)}
+              events={events.filter(e => e.week_index === selectedWeek)}
               onAddEvent={() => setIsAddEventOpen(true)}
             />
           </motion.div>

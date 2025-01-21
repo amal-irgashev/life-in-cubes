@@ -121,28 +121,28 @@ export function AddEventDialog({ open, onOpenChange, onAdd, selectedWeek, birthD
       let savedEvent: Event
       if (editingEvent) {
         savedEvent = await eventService.updateEvent(editingEvent.id, eventData)
+        dispatch({ type: 'UPDATE_EVENT', payload: savedEvent })
       } else {
         savedEvent = await eventService.createEvent(eventData)
+        dispatch({ type: 'ADD_EVENT', payload: savedEvent })
       }
 
-      // Always reload events to ensure consistency
-      await loadEvents()
-      
-      // Call onAdd after state is updated
+      // Call onAdd for parent component updates
       onAdd(savedEvent)
       toast.success(editingEvent ? 'Event updated successfully' : 'Event added successfully')
       onOpenChange(false)
+
+      // Reset form
+      setTitle('')
+      setDescription('')
+      setSelectedCategory(EVENT_CATEGORIES[0].id)
+      setSelectedDate(undefined)
+      setSelectedDayOfWeek(undefined)
 
     } catch (error) {
       console.error('Error saving event:', error)
       toast.error('Failed to save event. Please try again.')
     }
-
-    setTitle('')
-    setDescription('')
-    setSelectedCategory(EVENT_CATEGORIES[0].id)
-    setSelectedDate(undefined)
-    setSelectedDayOfWeek(undefined)
   }
 
   const renderDateSelector = () => (

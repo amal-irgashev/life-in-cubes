@@ -58,9 +58,35 @@ def clear_auth_cookies(response):
 class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         try:
-            response = super().post(request, *args, **kwargs)
-            if response.status_code == 200:
+            # Print request data for debugging (excluding password)
+            print("Login attempt for user:", request.data.get('username'))
+            print("Request data:", {k: v if k != 'password' else '***' for k, v in request.data.items()})
+            
+            # Validate required fields
+            if not request.data.get('username'):
+                return Response(
+                    {'error': 'Username is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            if not request.data.get('password'):
+                return Response(
+                    {'error': 'Password is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Try to get the user first
+            try:
                 user = User.objects.get(username=request.data['username'])
+            except User.DoesNotExist:
+                return Response(
+                    {'error': 'User does not exist'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            
+            # Attempt to get tokens
+            response = super().post(request, *args, **kwargs)
+            
+            if response.status_code == 200:
                 user_data = UserSerializer(user).data
                 
                 # Set cookies
@@ -75,10 +101,17 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                     'user': user_data,
                     'message': 'Successfully logged in'
                 }
-            return response
+                return response
+            else:
+                return Response(
+                    {'error': 'Invalid credentials'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+                
         except Exception as e:
+            print("Login error:", str(e))
             return Response(
-                {'error': 'Invalid credentials'},
+                {'error': str(e)},
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
@@ -383,5 +416,16 @@ def change_password(request):
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def get_csrf_token(request):
-    """Get CSRF token for the client."""
-    return JsonResponse({'csrfToken': get_token(request)})
+    """Get CSRF token for the current session"""
+    try:
+        csrf_token = get_token(request)
+        print("Generated CSRF token:", csrf_token)
+        response = JsonResponse({'csrfToken': csrf_token})
+        response["X-CSRFToken"] = csrf_token
+        return response
+    except Exception as e:
+        print("CSRF token error:", str(e))
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

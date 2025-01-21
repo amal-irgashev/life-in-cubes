@@ -32,6 +32,7 @@ export type EventAction =
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string }
   | { type: 'CLEAR_ERROR' }
+  | { type: 'CLEAR_EVENTS' }
 
 export interface EventsContextType {
   state: EventsState

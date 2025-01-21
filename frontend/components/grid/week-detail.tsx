@@ -84,11 +84,19 @@ export function WeekDetail({ weekIndex, birthDate, onBack, events, onAddEvent }:
 
   // Helper function to get the formatted date for an event
   const getEventDate = (weekIndex: number, dayOfWeek: number = 0) => {
-    const weekStart = startOfWeek(addWeeks(birthDate, weekIndex))
     try {
-      return format(addDays(weekStart, dayOfWeek), 'EEEE, MMM d')
+      const weekStart = startOfWeek(addWeeks(new Date(birthDate), weekIndex))
+      const eventDate = addDays(weekStart, dayOfWeek)
+      
+      // Validate the date before formatting
+      if (isNaN(eventDate.getTime())) {
+        throw new Error('Invalid date')
+      }
+      
+      return format(eventDate, 'EEEE, MMM d')
     } catch (error) {
-      return format(weekStart, 'MMM d, yyyy')
+      console.error('Error formatting date:', error)
+      return 'Date not available'
     }
   }
 
@@ -174,7 +182,7 @@ export function WeekDetail({ weekIndex, birthDate, onBack, events, onAddEvent }:
                   >
                     <div className="flex items-center space-x-3 flex-1">
                       <div className="p-2 rounded-md bg-muted">
-                        <IconComponent className="h-5 w-5" style={{ color: event.color }} />
+                        <IconComponent className="h-5 w-5" style={{ color: event.color || '#CBD5E1' }} />
                       </div>
                       <div className="flex-1">
                         <h4 className="text-sm font-medium flex items-center gap-2 mb-0.5 text-foreground">
@@ -184,7 +192,7 @@ export function WeekDetail({ weekIndex, birthDate, onBack, events, onAddEvent }:
                           </span>
                         </h4>
                         <p className="text-xs text-muted-foreground">
-                          {getEventDate(event.weekIndex, event.dayOfWeek)}
+                          {getEventDate(event.week_index, event.day_of_week)}
                         </p>
                       </div>
                     </div>

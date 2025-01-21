@@ -1,11 +1,17 @@
-import { User } from './api'
+import type { User } from './user'
 
 // Auth Context Types
 export interface AuthContextType {
   user: User | null
   isLoading: boolean
   isAuthenticated: boolean
-  signIn: (username: string, password: string, redirectTo?: string) => Promise<void>
+  signIn: (
+    credentials: { 
+      username: string | FormDataEntryValue | null
+      password: string | FormDataEntryValue | null 
+    }, 
+    redirectTo?: string
+  ) => Promise<void>
   signOut: () => Promise<void>
   register: (userData: {
     username: string
